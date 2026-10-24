@@ -1,0 +1,52 @@
+name: Build downloadable Project Exodus modpack
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'modpack/Project-Exodus-Profile.zip'
+      - '.github/workflows/package-modpack.yml'
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14'
+      - name: Compile Project Exodus addon
+        run: gradle build --no-daemon
+      - name: Assemble CurseForge import ZIP
+        shell: python
+        run: |
+          import glob,json,os,zipfile
+          src="modpack/Project-Exodus-Profile.zip"
+          if not os.path.isfile(src):
+              raise SystemExit("Missing modpack/Project-Exodus-Profile.zip: upload the CurseForge export first.")
+          jar=next((p for p in glob.glob("build/libs/*.jar") if not p.endswith("-sources.jar")),None)
+          if not jar:
+              raise SystemExit("No compiled mod JAR found.")
+          with zipfile.ZipFile(src) as original:
+              entries={n:original.read(n) for n in original.namelist() if not n.endswith("/")}
+          manifest=json.loads(entries["manifest.json"])
+          assert manifest["minecraft"]["version"]=="1.21.1", "Expected Minecraft 1.21.1"
+          entries["overrides/mods/"+os.path.basename(jar)]=open(jar,"rb").read()
+          os.makedirs("dist",exist_ok=True)
+          dst="dist/Project-Exodus-CurseForge-Import.zip"
+          with zipfile.ZipFile(dst,"w",zipfile.ZIP_DEFLATED) as result:
+              for name,data in sorted(entries.items()):
+                  result.writestr(name,data)
+          with zipfile.ZipFile(dst) as verify:
+              assert verify.testzip() is None
+              assert "manifest.json" in verify.namelist()
+          print("Created",dst,"with",len(entries),"files")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Project-Exodus-CurseForge-Import
+          path: dist/Project-Exodus-CurseForge-Import.zip
+          retention-days: 30

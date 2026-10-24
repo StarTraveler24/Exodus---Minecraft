@@ -42,6 +42,7 @@ public final class SporePathology {
         ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType());
         if (id == null || !id.getNamespace().equals("spore")) return;
         if (mob.tickCount % 40 != 0) return;
+        // Do not affect players, wildlife, or living, uninfected Spore organisms.
 
         Collection<?> infections = infections(mob);
         if (infections.isEmpty()) return;
@@ -53,7 +54,8 @@ public final class SporePathology {
 
         for (Object infection : infections) {
             try {
-                Object modulesRaw = infection.getClass().getMethod("modules").invoke(infection);
+                Object strain = infection.getClass().getMethod("strain").invoke(infection);
+                Object modulesRaw = strain.getClass().getMethod("modules").invoke(strain);
                 if (!(modulesRaw instanceof Collection<?> modules)) continue;
                 boolean cytotoxic = false, rapid = false;
                 for (Object module : modules) {

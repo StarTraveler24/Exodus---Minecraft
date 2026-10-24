@@ -58,16 +58,20 @@ public final class SporePathology {
                 Object modulesRaw = strain.getClass().getMethod("modules").invoke(strain);
                 if (!(modulesRaw instanceof Collection<?> modules)) continue;
                 boolean cytotoxic = false, rapid = false;
+                boolean evasive = false;
                 for (Object module : modules) {
                     String name = ((Enum<?>) module).name();
                     if ("CYTOTOXIN".equals(name)) cytotoxic = true;
+                    if ("IMMUNE_EVASION".equals(name)) evasive = true;
                     if ("RAPID_REPLICATION".equals(name)) rapid = true;
                     if ("NEUROTROPISM".equals(name)) neurological = true;
                     if ("HEMORRHAGIC_FACTOR".equals(name)) hemorrhagic = true;
                     if ("RESPIRATORY_TROPISM".equals(name)) respiratory = true;
                 }
-                if (cytotoxic) damage += 2.0f;
-                if (rapid) damage += 1.0f;
+                if (cytotoxic) damage += evasive ? 2.75f : 2.0f;
+                if (rapid) damage += evasive ? 1.5f : 1.0f;
+                // Existing PatientZero gene only: a modest fantasy bonus for overcoming Spore adaptation.
+                // Evasion alone never causes damage and each tick remains capped at 8 HP.
             } catch (ReflectiveOperationException | ClassCastException ignored) {
                 // Unknown PatientZero strain variant: never damage a mob on a guess.
             }

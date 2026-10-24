@@ -11,7 +11,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /**
- * Give PatientZero's real virus dose interaction precedence over MCA dialogue.
+ * Give PatientZero syringes and virus doses precedence over MCA dialogue.
  * PatientZero still decides strain validity, target susceptibility and consumption.
  * No fabricated infections or direct modifications to MCA are needed.
  */
@@ -27,10 +27,12 @@ public final class McaPatientZeroInjection {
         if (id == null || (!id.getNamespace().equals("mca") && !id.getNamespace().equals("minecraftcomesalive"))) return;
         ItemStack held = event.getEntity().getItemInHand(event.getHand());
         ResourceLocation heldId = BuiltInRegistries.ITEM.getKey(held.getItem());
-        if (heldId == null || !heldId.toString().equals("patientzero:virus_dose")) return;
+        if (heldId == null) return;
+        String itemId = heldId.toString();
+        if (!itemId.equals("patientzero:virus_dose") && !itemId.equals("patientzero:empty_syringe")) return;
 
         InteractionResult result = held.interactLivingEntity(event.getEntity(), target, event.getHand());
-        // Even if a malformed dose fails, MCA dialogue must not open.
+        // When a PatientZero tool is held, prevent MCA dialogue from swallowing this click.
         event.setCancellationResult(result.consumesAction() ? result : InteractionResult.FAIL);
         event.setCanceled(true);
     }

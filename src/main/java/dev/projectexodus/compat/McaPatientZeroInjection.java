@@ -1,0 +1,37 @@
+package dev.projectexodus.compat;
+
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+
+/**
+ * Give PatientZero's real virus dose interaction precedence over MCA dialogue.
+ * PatientZero still decides strain validity, target susceptibility and consumption.
+ * No fabricated infections or direct modifications to MCA are needed.
+ */
+public final class McaPatientZeroInjection {
+    private McaPatientZeroInjection() { }
+
+    public static void register() { NeoForge.EVENT_BUS.register(McaPatientZeroInjection.class); }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (event.isCanceled() || !(event.getTarget() instanceof LivingEntity target)) return;
+        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(target.getType());
+        if (id == null || (!id.getNamespace().equals("mca") && !id.getNamespace().equals("minecraftcomesalive"))) return;
+        ItemStack held = event.getEntity().getItemInHand(event.getHand());
+        ResourceLocation heldId = BuiltInRegistries.ITEM.getKey(held.getItem());
+        if (heldId == null || !heldId.toString().equals("patientzero:virus_dose")) return;
+
+        InteractionResult result = held.interactLivingEntity(event.getEntity(), target, event.getHand());
+        // Even if a malformed dose fails, MCA dialogue must not open.
+        event.setCancellationResult(result.consumesAction() ? result : InteractionResult.FAIL);
+        event.setCanceled(true);
+    }
+}

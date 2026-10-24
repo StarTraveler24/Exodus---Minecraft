@@ -29,6 +29,7 @@ jobs:
           src="modpack/Project-Exodus-Profile.zip"
           if not os.path.isfile(src):
               src="Project-Exodus-Industrial-Foregoing-Extra-Upgrades-v2.9.zip"
+              print("WARNING: Using legacy v2.9 input! Upload v3.7 as modpack/Project-Exodus-Profile.zip to build current content.")
           if not os.path.isfile(src):
               raise SystemExit("Missing modpack/Project-Exodus-Profile.zip: upload the CurseForge export first.")
           jar=next((p for p in glob.glob("build/libs/*.jar") if not p.endswith("-sources.jar")),None)
@@ -37,6 +38,8 @@ jobs:
           with zipfile.ZipFile(src) as original:
               entries={n:original.read(n) for n in original.namelist() if not n.endswith("/") and not (n.startswith("overrides/mods/") and os.path.basename(n).startswith("project-exodus-compat-") and n.endswith(".jar"))}
           manifest=json.loads(entries["manifest.json"])
+          if os.path.basename(src).endswith("v2.9.zip"):
+              raise SystemExit("The active source is still v2.9. Upload Project Exodus v3.7 to modpack/Project-Exodus-Profile.zip before publishing the current release.")
           assert manifest["minecraft"]["version"]=="1.21.1", "Expected Minecraft 1.21.1"
           entries["overrides/mods/"+os.path.basename(jar)]=open(jar,"rb").read()
           assert sum(n.startswith("overrides/mods/project-exodus-compat-") and n.endswith(".jar") for n in entries)==1

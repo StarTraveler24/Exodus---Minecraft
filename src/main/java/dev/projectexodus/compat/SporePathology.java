@@ -54,8 +54,7 @@ public final class SporePathology {
 
         for (Object infection : infections) {
             try {
-                Object strain = infection.getClass().getMethod("strain").invoke(infection);
-                Object modulesRaw = strain.getClass().getMethod("modules").invoke(strain);
+                Object modulesRaw = infection.getClass().getMethod("modules").invoke(infection);
                 if (!(modulesRaw instanceof Collection<?> modules)) continue;
                 boolean cytotoxic = false, rapid = false;
                 boolean evasive = false;
@@ -81,9 +80,33 @@ public final class SporePathology {
         if (neurological) mob.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 1, false, true));
         if (respiratory) mob.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 80, 0, false, true));
         if (damage > 0) {
-            DamageSource source = world.damageSources().magic();
-            mob.hurt(source, Math.min(damage, 8f));
+            // Fictional adaptation meter advances with repeated applications.
+            // IMMUNE_EVASION affects how strongly the monster can adapt.
+            var memory = mob.getPersistentData();
+            int adaptation = memory.getInt("exodusSporeAdaptation");
+            int maxAdaptation = 100;
+            boolean evasiveInAnyStrain = hasGene(infections, "IMMUNE_EVASION");
+            int growth = evasiveInAnyStrain ? 1 : 4;
+            // High adaptation reduces the bonus damage from repeated exposures.
+            float protection = (adaptation / 100.0f) * 0.7f;
+            float adjusted = Math.max(0.25f, Math.min(damage, 8f) * (1.0f - protection));
+            mob.hurt(world.damageSources().magic(), adjusted);
+            memory.putInt("exodusSporeAdaptation", Math.min(maxAdaptation, adaptation + growth));
         }
+    }
+
+    private static boolean hasGene(Collection<?> strains, String gene) {
+        for (Object strain : strains) {
+            try {
+                Object modules = strain.getClass().getMethod("modules").invoke(strain);
+                if (modules instanceof Collection<?> collection) {
+                    for (Object module : collection) {
+                        if (module instanceof Enum<?> value && gene.equals(value.name())) return true;
+                    }
+                }
+            } catch (ReflectiveOperationException ignored) { }
+        }
+        return false;
     }
 
     private static Collection<?> infections(LivingEntity mob) {

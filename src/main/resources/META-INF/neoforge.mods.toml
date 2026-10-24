@@ -18,3 +18,21 @@ type="required"
 versionRange="[1.21.1,1.21.2)"
 ordering="NONE"
 side="BOTH"
+
+[[mods]]
+modId="projectexoduspathology"
+version="0.1.0"
+displayName="Project Exodus: Spore Pathology"
+description='''PatientZero research diseases affect Spore creatures'''
+[[dependencies.projectexoduspathology]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.0,)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.projectexoduspathology]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.21.2)"
+ordering="NONE"
+side="BOTH"

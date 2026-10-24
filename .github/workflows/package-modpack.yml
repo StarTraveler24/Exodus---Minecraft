@@ -32,10 +32,11 @@ jobs:
           if not jar:
               raise SystemExit("No compiled mod JAR found.")
           with zipfile.ZipFile(src) as original:
-              entries={n:original.read(n) for n in original.namelist() if not n.endswith("/")}
+              entries={n:original.read(n) for n in original.namelist() if not n.endswith("/") and not (n.startswith("overrides/mods/") and os.path.basename(n).startswith("project-exodus-compat-") and n.endswith(".jar"))}
           manifest=json.loads(entries["manifest.json"])
           assert manifest["minecraft"]["version"]=="1.21.1", "Expected Minecraft 1.21.1"
           entries["overrides/mods/"+os.path.basename(jar)]=open(jar,"rb").read()
+          assert sum(n.startswith("overrides/mods/project-exodus-compat-") and n.endswith(".jar") for n in entries)==1
           os.makedirs("dist",exist_ok=True)
           dst="dist/Project-Exodus-CurseForge-Import.zip"
           with zipfile.ZipFile(dst,"w",zipfile.ZIP_DEFLATED) as result:

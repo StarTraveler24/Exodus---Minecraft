@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'modpack/Project-Exodus-Profile.zip'
+      - 'Project-Exodus-Industrial-Foregoing-Extra-Upgrades-v2.9.zip'
       - '.github/workflows/package-modpack.yml'
 jobs:
   package:
@@ -25,7 +26,7 @@ jobs:
         shell: python
         run: |
           import glob,json,os,zipfile
-          src="modpack/Project-Exodus-Profile.zip"
+          src="modpack/Project-Exodus-Profile.zip"\n          if not os.path.isfile(src):\n              src="Project-Exodus-Industrial-Foregoing-Extra-Upgrades-v2.9.zip"
           if not os.path.isfile(src):
               raise SystemExit("Missing modpack/Project-Exodus-Profile.zip: upload the CurseForge export first.")
           jar=next((p for p in glob.glob("build/libs/*.jar") if not p.endswith("-sources.jar")),None)

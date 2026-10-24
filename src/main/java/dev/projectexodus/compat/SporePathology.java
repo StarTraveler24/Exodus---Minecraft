@@ -33,7 +33,7 @@ public final class SporePathology {
     private static Method strainsMethod;
     private static boolean lookupAttempted;
 
-    public SporePathology() { NeoForge.EVENT_BUS.register(this); }
+    public SporePathology() { NeoForge.EVENT_BUS.register(this); McaPatientZeroInjection.register(); }
 
     @SubscribeEvent
     public void onEntityTick(EntityTickEvent.Post event) {
